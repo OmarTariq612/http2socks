@@ -1,28 +1,28 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"log"
-	"os"
+	"strings"
 )
 
 func main() {
-	lenArgs := len(os.Args)
-	if lenArgs == 1 || lenArgs > 3 {
-		fmt.Printf("usage %s [bind_addr:bind_port] server_addr:server_port\n", os.Args[0])
+	bindAddr := flag.String("bind", ":5555", "bind address")
+	serverAddr := flag.String("socks", "", "socks server address")
+	cred := flag.String("cred", "", "username:password that will be used to authenticate http clients")
+	flag.Parse()
+
+	if *serverAddr == "" {
+		log.Println("socks flag is required")
 		return
 	}
 
-	var bindAddr, serverAddr string
-	if lenArgs == 2 {
-		bindAddr = ":5555"
-		serverAddr = os.Args[1]
-	} else {
-		bindAddr = os.Args[1]
-		serverAddr = os.Args[2]
+	if *cred != "" && !strings.Contains(*cred, ":") {
+		log.Println("cred must take the username:password form")
+		return
 	}
 
-	r := NewRelayer(bindAddr, serverAddr)
+	r := NewRelayer(*bindAddr, *serverAddr, *cred)
 	err := r.ListenAndServe()
 	if err != nil {
 		log.Println(err)
